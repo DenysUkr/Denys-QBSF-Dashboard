@@ -1,0 +1,48 @@
+name: Sync collaborators
+
+# Invites everyone listed in collaborators.yml with Write access.
+# To add someone: add their GitHub USERNAME to collaborators.yml and commit.
+#
+# Requires a one-time repo secret COLLAB_PAT — a Personal Access Token from a
+# repo admin with the "repo" scope (classic) or "Administration: read/write"
+# (fine-grained). The built-in GITHUB_TOKEN cannot manage collaborators.
+
+on:
+  push:
+    branches: [main]
+    paths: [collaborators.yml]
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Invite collaborators
+        env:
+          GH_TOKEN: ${{ secrets.COLLAB_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          perm=$(yq -r '.permission // "push"' collaborators.yml)
+          mapfile -t users < <(yq -r '.collaborators[]?' collaborators.yml)
+          if [ ${#users[@]} -eq 0 ]; then
+            echo "No usernames listed in collaborators.yml — nothing to do."
+            exit 0
+          fi
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Set the COLLAB_PAT secret (a PAT with repo admin) to enable auto-invites."
+            exit 1
+          fi
+          fail=0
+          for u in "${users[@]}"; do
+            [ -z "$u" ] && continue
+            echo "Inviting $u as '$perm'..."
+            if gh api --method PUT "repos/$REPO/collaborators/$u" -f permission="$perm" >/dev/null 2>&1; then
+              echo "  ok ($u invited / already has access)"
+            else
+              echo "  ::warning::could not invite $u (check the username exists)"
+              fail=1
+            fi
+          done
+          exit $fail

@@ -1,0 +1,16 @@
+# Collaborators for this dashboard.
+#
+# HOW TO ADD SOMEONE: put their GitHub USERNAME under `collaborators:` and commit.
+# The "Sync collaborators" workflow then invites them with Write access.
+# They still have to click "accept" on the invite GitHub emails them.
+#
+# NOTE: the API needs USERNAMES, not emails. Map the people you have:
+#   marc@q-branch.dev     -> <marc's github username>
+#   brandon@q-branch.dev  -> <brandon's github username>
+#   denys@q-branch.dev    -> DenysUkr  (repo owner — already has access, do NOT list)
+
+permission: push   # push = read + write
+
+collaborators: []
+  # - marc-github-username
+  # - brandon-github-username

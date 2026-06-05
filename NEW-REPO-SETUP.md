@@ -1,112 +1,109 @@
-# Denys-QBSF-Dashboard — Setup + Collaborators + Netlify
+# Denys-QBSF-Dashboard — Automated Setup
 
-**Model:** one shared repository, **3 direct collaborators** (Write access), auto-deployed by Netlify. Every push to `main` by any collaborator publishes online in ~30s.
+**Model:** one shared repo, collaborators with Write access, **auto-published by GitHub Pages** on every push to `main`. Adding a person and publishing a change are both "edit a file + commit" — the rest is handled by committed GitHub Actions workflows.
 
-> Replaces the old "branch-per-contributor + branch protection" model. Collaborators push directly to the shared repo instead of owning a protected branch.
-
-**Concrete values for this setup:**
+**Concrete values:**
 
 | Item | Value |
 |---|---|
 | Owner | `DenysUkr` |
-| Repo name | `Denys-QBSF-Dashboard` (owner's name + "QBSF Dashboard") |
+| Repo | `Denys-QBSF-Dashboard` |
 | Visibility | Public |
-| Collaborators | `marc@q-branch.dev`, `brandon@q-branch.dev`, `denys@q-branch.dev` |
+| Live URL | `https://denysukr.github.io/Denys-QBSF-Dashboard/` |
+| People | `marc@q-branch.dev`, `brandon@q-branch.dev`, `denys@q-branch.dev` (owner) |
 
-> ⚠️ Two things to know about collaborators:
-> - GitHub's **API/CLI adds collaborators by username**, not email. The **browser "Add people" box accepts emails** and resolves them to accounts — so the email list below uses the browser path.
-> - `denys@q-branch.dev` may be the **owner account** itself. You can't add yourself as a collaborator; if so, skip that one (the owner already has full access).
+---
+
+## What's automated vs. manual
+
+| Step | How |
+|---|---|
+| Publish on every push | ✅ Automatic — `.github/workflows/deploy.yml` (GitHub Pages) |
+| Add a collaborator | ✅ Automatic — add username to `collaborators.yml`, commit → `.github/workflows/sync-collaborators.yml` invites them |
+| Stand up a brand-new repo | ✅ One command — `scripts/bootstrap.ps1` |
+| **Create the COLLAB_PAT secret** | ⚠️ One-time manual (a token must be made by a human) |
+| **Collaborator accepts the invite** | ⚠️ Manual — GitHub won't force-add anyone |
+
+That one-time token and the "accept" click are the only manual steps GitHub doesn't let us automate away.
 
 ---
 
 ## 0. The AI prompt (paste-in for collaborators)
 
-The repo ships with **`CONTRIBUTOR_AGENT_BRIEF.md`** — the pastable prompt each collaborator gives their AI agent (claude.ai, ChatGPT, Claude Code). They paste it, describe the change they want, and the agent returns a complete `index.html`.
-
-Keep this file in the repo so every collaborator starts from the same prompt. (Its workflow section assumes the branch model; for this direct-collaborator model, the publish step is simply "commit to `main`" — I can adapt the brief on request.)
+The repo ships with **`CONTRIBUTOR_AGENT_BRIEF.md`** — the pastable prompt each collaborator gives their AI agent. They paste it, describe a change, and the agent returns a complete `index.html`. (Publish step in this model = "commit to `main`".)
 
 ---
 
-## 1. Create the repository
+## 1. One-time: enable collaborator auto-invites
 
-### Option A — GitHub CLI (fastest)
+The deploy workflow needs nothing. The collaborator-sync workflow needs a token:
 
-```powershell
-# One-time: authenticate the CLI
-gh auth login   # GitHub.com -> HTTPS -> login with a browser
+1. Create a PAT: https://github.com/settings/tokens → **classic** token with the **`repo`** scope (or a fine-grained token with **Administration: read/write** on this repo).
+2. Repo → **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: **`COLLAB_PAT`**
+   - Value: the token
+3. Done. You never touch this again.
 
-# From the folder that holds index.html:
-gh repo create DenysUkr/Denys-QBSF-Dashboard --public --source=. --remote=origin --push
+> Skipping this just disables auto-invites — you can still add people in the browser (below). Deploy still works.
+
+---
+
+## 2. Add collaborators
+
+### Automatic (recommended)
+
+Edit **`collaborators.yml`**, add each person's GitHub **username**, commit:
+
+```yaml
+collaborators:
+  - marc-github-username
+  - brandon-github-username
 ```
 
-### Option B — Browser
+On commit, the workflow invites them with Write access. (`denys@q-branch.dev` = `DenysUkr`, the owner — already has access, don't list.)
 
-1. https://github.com/new
-2. Owner: **`DenysUkr`** · Name: **`Denys-QBSF-Dashboard`** · Visibility: **Public**
-3. **Do NOT** initialize with README/.gitignore/license.
-4. Create, then push:
-   ```powershell
-   git remote add origin https://github.com/DenysUkr/Denys-QBSF-Dashboard.git
-   git push -u origin main
-   ```
+### Manual fallback (works with emails)
 
-Files that go up: `index.html` (the dashboard), `CONTRIBUTOR_AGENT_BRIEF.md` (the prompt), `NEW-REPO-SETUP.md` (this guide).
+Repo → **Settings → Collaborators → Add people** → paste each email → role **Write**. Use this if you only have emails, not usernames.
 
 ---
 
-## 2. Add the 3 collaborators
+## 3. Deploy (GitHub Pages) — already automatic
 
-### Option A — Browser (works with emails)
+`.github/workflows/deploy.yml` runs on every push to `main`, self-enables Pages on the first run, and publishes the repo root. Live at:
 
-GitHub repo → **Settings → Collaborators → Add people** → type each email → pick the account → role **Write** → send invite:
+**https://denysukr.github.io/Denys-QBSF-Dashboard/**
 
-- `marc@q-branch.dev`
-- `brandon@q-branch.dev`
-- `denys@q-branch.dev`  *(skip if this is the owner account)*
+No Netlify, no secrets, no browser linking. (If you ever prefer Netlify, swap the workflow for a `netlify deploy` step with `NETLIFY_AUTH_TOKEN` + `NETLIFY_SITE_ID` secrets.)
 
-Each person gets an email invite they must accept.
+---
 
-### Option B — GitHub CLI (needs usernames, not emails)
+## 4. Stand up the NEXT dashboard in one command
 
-Once you know each person's GitHub **username**:
+From a folder containing `index.html` + this `.github/` setup, with `gh` authenticated:
 
 ```powershell
-gh api --method PUT repos/DenysUkr/Denys-QBSF-Dashboard/collaborators/<USERNAME> -f permission=push
+./scripts/bootstrap.ps1 -Owner <owner> -Repo <Name>-QBSF-Dashboard `
+    -Collaborators alice-username,bob-username
 ```
 
-`permission=push` = read + write.
+Creates the repo, pushes, invites collaborators. Pages turns on automatically on the first push.
 
 ---
 
-## 3. Connect Netlify (browser-only)
+## 5. Test / verify
 
-1. https://app.netlify.com/start → **Import from Git → GitHub.**
-2. Authorize the Netlify GitHub App, grant access to **`DenysUkr/Denys-QBSF-Dashboard`**.
-3. Pick the repo. **Site settings:**
-   - Branch to deploy: `main`
-   - Build command: *(blank)*
-   - Publish directory: *(blank — root)*
-4. **Deploy site** (~30s). Then **Change site name** to something memorable → URL becomes `https://<site-name>.netlify.app/`.
-5. (Optional) Build & deploy → **Branch deploys → All branches** for per-branch previews.
+```powershell
+# Repo + files
+gh api repos/DenysUkr/Denys-QBSF-Dashboard/contents --jq ".[].name"
+# Deploy workflow run
+gh run list --repo DenysUkr/Denys-QBSF-Dashboard --workflow deploy.yml -L 1
+# Collaborators
+gh api repos/DenysUkr/Denys-QBSF-Dashboard/collaborators --jq ".[].login"
+# Live URL returns 200 / text/html
+curl.exe -sI https://denysukr.github.io/Denys-QBSF-Dashboard/ | Select-String "HTTP|content-type"
+```
 
-After this, every push to `main` auto-publishes to the live URL.
-
----
-
-## 4. Test / verify
-
-- [ ] Repo exists and contains `index.html` + `CONTRIBUTOR_AGENT_BRIEF.md`:
-      ```powershell
-      gh repo view DenysUkr/Denys-QBSF-Dashboard --web
-      ```
-- [ ] All 3 collaborators show under Settings → Collaborators (invited/accepted):
-      ```powershell
-      gh api repos/DenysUkr/Denys-QBSF-Dashboard/collaborators --jq ".[].login"
-      ```
-- [ ] Live URL returns **200 / text/html** and renders (not raw source):
-      ```powershell
-      curl.exe -sI https://<site-name>.netlify.app/ | Select-String "HTTP|content-type"
-      ```
-- [ ] A collaborator edits `index.html` (pencil → commit to `main`) → live URL updates within ~60s.
-
-If the URL shows raw HTML instead of a rendered page, set the Netlify publish directory to the repo root (blank).
+- [ ] Deploy workflow shows ✅ on the latest commit
+- [ ] Live URL returns 200 and renders the dashboard (not raw source)
+- [ ] Each collaborator appears (after they accept) under Settings → Collaborators
