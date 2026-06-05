@@ -76,6 +76,8 @@ Repo → **Settings → Collaborators → Add people** → paste each email → 
 
 No Netlify, no secrets, no browser linking. (If you ever prefer Netlify, swap the workflow for a `netlify deploy` step with `NETLIFY_AUTH_TOKEN` + `NETLIFY_SITE_ID` secrets.)
 
+> **One-time gotcha (already handled for this repo):** the workflow's built-in `GITHUB_TOKEN` can't *create* the Pages site, only deploy to it. So Pages must be enabled once by an admin — done here via `gh api --method POST repos/<owner>/<repo>/pages -f build_type=workflow`. `scripts/bootstrap.ps1` runs this automatically for new repos.
+
 ---
 
 ## 4. Stand up the NEXT dashboard in one command

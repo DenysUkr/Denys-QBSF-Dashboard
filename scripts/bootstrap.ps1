@@ -26,6 +26,12 @@ $ErrorActionPreference = 'Stop'
 Write-Host "Creating $Owner/$Repo ($Visibility) and pushing current folder..."
 gh repo create "$Owner/$Repo" "--$Visibility" --source=. --remote=origin --push
 
+# 1b. Enable GitHub Pages (Actions source) once. The built-in GITHUB_TOKEN in
+#     the deploy workflow cannot create the Pages site itself, so do it here.
+Write-Host "Enabling GitHub Pages (Actions source)..."
+try { gh api --method POST "repos/$Owner/$Repo/pages" -f build_type=workflow | Out-Null }
+catch { Write-Host "  (Pages may already be enabled — continuing.)" }
+
 # 2. Invite collaborators (by GitHub username).
 foreach ($u in $Collaborators) {
   if ([string]::IsNullOrWhiteSpace($u)) { continue }
