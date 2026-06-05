@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q-Branch Strategy Framework</title>
+<style>
+  :root{--qb-black:#0a0a0a;--qb-dark:#111827;--qb-card:#1a2235;--qb-border:#2a3a52;--qb-gold:#d4a017;--qb-blue:#1e6bff;--qb-cyan:#00c2cb;--qb-green:#22c55e;--qb-orange:#f97316;--qb-red:#ef4444;--qb-text:#e2e8f0;--qb-muted:#94a3b8;--qb-xs:0.72rem;--qb-sm:0.82rem;--qb-base:0.92rem;--qb-lg:1.1rem;--qb-xl:1.4rem;--qb-2xl:1.8rem;--qb-radius:8px;--qb-radius2:14px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--qb-black);color:var(--qb-text);font-size:var(--qb-base);line-height:1.55;min-height:100vh;}
+  #loader{position:fixed;inset:0;background:var(--qb-black);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999;}
+  #loader .logo{font-size:2rem;font-weight:800;color:var(--qb-gold);letter-spacing:2px;}
+  #loader .spinner{width:36px;height:36px;border:3px solid var(--qb-border);border-top-color:var(--qb-gold);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #topbar{background:linear-gradient(90deg,var(--qb-dark),#0f1e35);border-bottom:1px solid var(--qb-border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+  .topbar-brand{font-size:var(--qb-lg);font-weight:800;color:var(--qb-gold);letter-spacing:1px;}
+  .topbar-right{display:flex;align-items:center;gap:12px;}
+  .badge-phase{padding:4px 12px;border-radius:99px;font-size:var(--qb-xs);font-weight:700;text-transform:uppercase;letter-spacing:1px;background:var(--qb-gold);color:var(--qb-black);}
+  .btn-share{padding:6px 16px;border-radius:var(--qb-radius);background:transparent;border:1px solid var(--qb-border);color:var(--qb-text);font-size:var(--qb-xs);cursor:pointer;}
+  .view-tabs{display:flex;gap:4px;}
+  .view-tab{padding:5px 12px;border-radius:var(--qb-radius);background:transparent;border:1px solid var(--qb-border);color:var(--qb-muted);font-size:var(--qb-xs);cursor:pointer;font-weight:700;letter-spacing:.5px;text-transform:uppercase;transition:all .2s;}
+  .view-tab.active{background:var(--qb-gold);color:var(--qb-black);border-color:var(--qb-gold);}
+  .view-tab:hover:not(.active){border-color:var(--qb-gold);color:var(--qb-gold);}
+  .view-label{font-size:var(--qb-xs);color:var(--qb-muted);padding:4px 8px;border-right:1px solid var(--qb-border);margin-right:4px;}
+  #hero{background:linear-gradient(135deg,#0d1520,#0f2040,#0a1828);border-bottom:1px solid var(--qb-border);padding:40px 24px 32px;}
+  .hero-inner{max-width:1400px;margin:0 auto;}
+  .hero-grid{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:start;}
+  .company-name{font-size:var(--qb-2xl);font-weight:800;margin-bottom:4px;}
+  .company-meta{font-size:var(--qb-xs);color:var(--qb-muted);margin-bottom:16px;display:flex;gap:16px;flex-wrap:wrap;}
+  .hero-mission{font-size:var(--qb-sm);color:var(--qb-muted);margin-bottom:12px;max-width:700px;}
+  .hero-elevator{font-size:var(--qb-sm);background:rgba(30,107,255,.08);border-left:3px solid var(--qb-blue);padding:12px 16px;border-radius:0 var(--qb-radius) var(--qb-radius) 0;max-width:720px;}
+  .rl-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;min-width:180px;}
+  .rl-item{background:var(--qb-card);border:1px solid var(--qb-border);border-radius:var(--qb-radius);padding:10px 12px;text-align:center;}
+  .rl-label{font-size:.65rem;font-weight:700;color:var(--qb-muted);text-transform:uppercase;letter-spacing:.5px;}
+  .rl-value{font-size:var(--qb-xl);font-weight:800;color:var(--qb-gold);}.hero-logo{max-height:72px;max-width:160px;object-fit:contain;border-radius:var(--qb-radius);margin-bottom:12px;display:block;background:rgba(255,255,255,.04);padding:6px;}
+  #phase-section{background:var(--qb-dark);border-bottom:1px solid var(--qb-border);padding:16px 24px;}
+  .phase-inner{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:1fr auto;gap:24px;align-items:start;}
+  .phase-track{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
+  .phase-step{padding:5px 14px;border-radius:99px;font-size:var(--qb-xs);font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:rgba(255,255,255,.05);color:var(--qb-muted);border:1px solid var(--qb-border);}
+  .phase-step.active{background:var(--qb-blue);color:#fff;border-color:var(--qb-blue);}
+  .phase-step.completed{background:rgba(34,197,94,.15);color:var(--qb-green);border-color:rgba(34,197,94,.3);}
+  .activity-list{display:flex;flex-direction:column;gap:4px;min-width:220px;}
+  .activity-item{display:flex;align-items:center;gap:10px;font-size:var(--qb-xs);color:var(--qb-muted);padding:4px 0;}
+  .activity-num{width:20px;height:20px;border-radius:50%;background:var(--qb-border);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0;}
+  .activity-item.done .activity-num{background:rgba(34,197,94,.2);color:var(--qb-green);}
+  .activity-item.active .activity-num{background:var(--qb-blue);color:#fff;}
+  .activity-item.done{color:var(--qb-text);}
+  .activity-item.active{color:var(--qb-blue);font-weight:600;}
+  #federalPhaseDetail{font-size:var(--qb-sm);color:var(--qb-muted);max-width:700px;}
+  #federalPhaseDetail p{margin-bottom:6px;}
+  #main{max-width:1400px;margin:0 auto;padding:24px;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .card{background:var(--qb-card);border:1px solid var(--qb-border);border-radius:var(--qb-radius2);padding:20px;}
+  .card.span2{grid-column:span 2;}
+  .card.span3{grid-column:span 3;}
+  .card-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .card-icon{width:36px;height:36px;border-radius:var(--qb-radius);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+  .card-title{font-size:var(--qb-sm);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+  .card-body{font-size:var(--qb-sm);color:var(--qb-muted);}
+  .card-body p{margin-bottom:6px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .stat-item{background:rgba(255,255,255,.03);border-radius:var(--qb-radius);padding:10px 12px;}
+  .stat-label{font-size:.65rem;color:var(--qb-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+  .stat-value{font-size:var(--qb-lg);font-weight:700;}
+  .okr-block{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--qb-border);}
+  .okr-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .okr-label{font-size:var(--qb-xs);font-weight:700;color:var(--qb-gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+  .okr-text{font-size:var(--qb-sm);}
+  .kpi-item{padding:8px 12px;background:rgba(30,107,255,.06);border-left:3px solid var(--qb-blue);border-radius:0 var(--qb-radius) var(--qb-radius) 0;margin-bottom:8px;font-size:var(--qb-sm);}
+  .kpi-item:last-child{margin-bottom:0;}
+  .ooda-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .ooda-cell{background:rgba(255,255,255,.03);border-radius:var(--qb-radius);padding:12px;}
+  .ooda-cell-label{font-size:var(--qb-xs);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+  .ooda-cell:nth-child(1) .ooda-cell-label{color:var(--qb-cyan);}
+  .ooda-cell:nth-child(2) .ooda-cell-label{color:var(--qb-blue);}
+  .ooda-cell:nth-child(3) .ooda-cell-label{color:var(--qb-gold);}
+  .ooda-cell:nth-child(4) .ooda-cell-label{color:var(--qb-green);}
+  .ooda-cell-text{font-size:var(--qb-sm);color:var(--qb-muted);}
+  .tp-item{padding:10px 14px;background:rgba(0,194,203,.06);border-left:3px solid var(--qb-cyan);border-radius:0 var(--qb-radius) var(--qb-radius) 0;margin-bottom:8px;font-size:var(--qb-sm);}
+  .eco-label{font-size:var(--qb-xs);font-weight:700;color:var(--qb-cyan);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+  .eco-text{font-size:var(--qb-sm);}
+  .loe-grid{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:3px;margin-top:8px;}
+  .loe-year-header{text-align:center;font-weight:800;padding:7px 10px;border-radius:6px 6px 0 0;font-size:var(--qb-xs);letter-spacing:1px;text-transform:uppercase;}
+  .loe-row-label{font-size:.68rem;font-weight:700;color:var(--qb-cyan);text-transform:uppercase;letter-spacing:.5px;padding:10px 8px;display:flex;align-items:flex-start;border-right:2px solid var(--qb-border);line-height:1.4;}
+  .loe-cell{padding:9px 10px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:4px;font-size:.7rem;color:var(--qb-muted);line-height:1.55;}
+  .loe-cell.y1{border-left:2px solid rgba(30,107,255,.5);color:var(--qb-text);background:rgba(30,107,255,.04);}
+  .loe-cell.y2{border-left:2px solid rgba(0,194,203,.4);}
+  .loe-cell.y3{border-left:2px solid rgba(34,197,94,.4);}
+  .loe-step{margin-bottom:4px;display:flex;gap:5px;}
+  .loe-arrow{color:var(--qb-gold);flex-shrink:0;}
+  .inv-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+  .inv-item{background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.15);border-radius:var(--qb-radius);padding:10px 12px;}
+  .inv-label{font-size:var(--qb-xs);color:var(--qb-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+  .inv-value{font-size:var(--qb-sm);font-weight:700;}
+  .mkt-group{margin-bottom:14px;}
+  .mkt-group:last-child{margin-bottom:0;}
+  .mkt-label{font-size:var(--qb-xs);font-weight:700;color:var(--qb-cyan);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+  .mkt-text{font-size:var(--qb-sm);}
+  .pos-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .pos-item{background:rgba(0,194,203,.04);border:1px solid rgba(0,194,203,.15);border-radius:var(--qb-radius);padding:10px 12px;}
+  .pos-label{font-size:.65rem;font-weight:700;color:var(--qb-cyan);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+  .pos-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.65rem;font-weight:700;margin:2px 2px 2px 0;background:rgba(0,194,203,.1);color:var(--qb-cyan);border:1px solid rgba(0,194,203,.2);}
+  .cl-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .cl-item{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--qb-radius);font-size:var(--qb-xs);background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);}
+  .cl-item.done{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2);color:var(--qb-green);}
+  .cl-check{width:14px;height:14px;border-radius:3px;border:2px solid var(--qb-border);flex-shrink:0;}
+  .cl-item.done .cl-check{background:var(--qb-green);border-color:var(--qb-green);}
+  .gov-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+  .gov-item{background:rgba(30,107,255,.05);border:1px solid rgba(30,107,255,.15);border-radius:var(--qb-radius);padding:10px 12px;}
+  .gov-item-label{font-size:.65rem;font-weight:700;color:var(--qb-blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+  .gov-item-value{font-size:var(--qb-sm);font-weight:700;}
+  .gov-badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.68rem;font-weight:700;margin:2px 3px 2px 0;}
+  .gov-badge.green{background:rgba(34,197,94,.15);color:var(--qb-green);border:1px solid rgba(34,197,94,.3);}
+  .gov-badge.blue{background:rgba(30,107,255,.15);color:var(--qb-blue);border:1px solid rgba(30,107,255,.3);}
+  .gov-badge.gold{background:rgba(212,160,23,.15);color:var(--qb-gold);border:1px solid rgba(212,160,23,.3);}
+  .gov-badge.red{background:rgba(239,68,68,.15);color:var(--qb-red);border:1px solid rgba(239,68,68,.3);}
+  .gov-badge.gray{background:rgba(148,163,184,.1);color:var(--qb-muted);border:1px solid var(--qb-border);}
+  .service-table{width:100%;border-collapse:collapse;font-size:var(--qb-xs);}
+  .service-table th{padding:6px 10px;text-align:left;font-size:var(--qb-xs);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--qb-muted);border-bottom:1px solid var(--qb-border);}
+  .service-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+  .service-table tr:last-child td{border-bottom:none;}
+  .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle;}
+  .status-dot.filled{background:var(--qb-green);}
+  .status-dot.empty{background:var(--qb-border);}
+  .lesson-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:var(--qb-sm);color:var(--qb-muted);}
+  .lesson-item:last-child{border-bottom:none;}
+  .info-links{display:flex;flex-wrap:wrap;gap:10px;}
+  .info-link{padding:7px 16px;border-radius:var(--qb-radius);background:rgba(255,255,255,.04);border:1px solid var(--qb-border);color:var(--qb-text);font-size:var(--qb-xs);text-decoration:none;font-weight:600;transition:border-color .2s,color .2s;}
+  .info-link:hover{border-color:var(--qb-gold);color:var(--qb-gold);}
+  .info-link.empty{opacity:.4;cursor:default;}
+
+  /* Action 1 — Form vs AI source badges */
+  .source-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:.58rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-left:8px;vertical-align:middle;}
+  .source-badge.form{background:rgba(30,107,255,.1);color:var(--qb-blue);border:1px solid rgba(30,107,255,.2);}
+  .source-badge.ai{background:rgba(212,160,23,.13);color:var(--qb-gold);border:1px solid rgba(212,160,23,.3);}
+
+  /* Action 3 — Hero contact bar */
+  .hero-contact-bar{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:var(--qb-xs);}
+  .hcb-item{display:flex;align-items:center;gap:5px;color:var(--qb-muted);}
+  .hcb-item a{color:var(--qb-text);text-decoration:none;font-weight:600;}
+  .hcb-item a:hover{color:var(--qb-gold);}
+  .hcb-sep{color:var(--qb-border);margin:0 2px;}
+
+  /* Action 4 — Functional compliance links */
+  .cl-link{color:inherit;text-decoration:none;display:flex;align-items:center;gap:4px;width:100%;}
+  .cl-item.done .cl-link:hover{text-decoration:underline;}
+  .cl-ext{font-size:.55rem;opacity:.55;}
+
+  /* Action 5 — Readiness level legend */
+  .rl-fullname{font-size:.58rem;color:var(--qb-muted);margin-bottom:2px;line-height:1.2;}
+  .rl-value.rl-low{color:var(--qb-red) !important;}
+  .rl-value.rl-mid{color:var(--qb-gold) !important;}
+  .rl-value.rl-high{color:var(--qb-green) !important;}
+  .rl-summary{margin-top:8px;background:rgba(212,160,23,.08);border:1px solid rgba(212,160,23,.22);border-radius:var(--qb-radius);padding:9px 12px;}
+  .rl-summary-row{display:flex;align-items:baseline;justify-content:space-between;gap:16px;}
+  .rl-summary-label{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--qb-gold);}
+  .rl-summary-value{font-size:var(--qb-lg);font-weight:900;color:var(--qb-text);}
+  .rl-legend{margin-top:10px;padding-top:8px;border-top:1px solid var(--qb-border);}
+  .rl-legend-bar{display:flex;gap:2px;margin-bottom:3px;}
+  .rl-legend-seg{height:3px;border-radius:99px;flex:1;}
+  .rl-legend-labels{display:flex;justify-content:space-between;font-size:.55rem;color:var(--qb-muted);}
+  .rl-abbr-key{font-size:.58rem;color:var(--qb-muted);margin-top:5px;line-height:1.7;}
+
+  .agent-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:99px;font-size:.6rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;background:rgba(212,160,23,.15);color:var(--qb-gold);border:1px solid rgba(212,160,23,.3);margin-left:8px;vertical-align:middle;}
+  .agent-section{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--qb-border);}
+  .agent-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .agent-section-label{font-size:var(--qb-xs);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+  .agent-section-text{font-size:var(--qb-sm);color:var(--qb-muted);white-space:pre-wrap;line-height:1.65;}
+  .agent-last-run{font-size:.65rem;color:var(--qb-muted);margin-top:12px;padding-top:10px;border-top:1px solid var(--qb-border);}.agent-bullet{display:flex;gap:6px;margin:4px 0;font-size:var(--qb-sm);color:var(--qb-text);line-height:1.5;}.agent-arrow{color:var(--qb-gold);font-weight:700;flex-shrink:0;min-width:14px;}.agent-p{margin:0 0 6px 0;font-size:var(--qb-sm);color:var(--qb-muted);line-height:1.65;}.agent-section-text strong{color:var(--qb-text);font-weight:700;}.agent-section-text em{color:var(--qb-gold);font-style:normal;}
+  .agent-empty{font-size:var(--qb-sm);color:#475569;font-style:italic;}
+  .agent-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:4px;}
+  .agent-col{}
+  .net-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:4px;}
+  .net-col-label{font-size:var(--qb-xs);font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid;}
+  .net-contact{padding:12px;border-radius:var(--qb-radius);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);margin-bottom:8px;}
+  .net-contact.high{border-left:3px solid var(--qb-green);}
+  .net-contact.medium{border-left:3px solid var(--qb-gold);}
+  .net-contact-name{font-size:var(--qb-sm);font-weight:700;margin-bottom:2px;}
+  .net-contact-role{font-size:.68rem;color:var(--qb-muted);margin-bottom:4px;}
+  .net-contact-reason{font-size:.68rem;color:var(--qb-muted);line-height:1.5;}
+  .net-strength{display:inline-block;padding:1px 6px;border-radius:99px;font-size:.6rem;font-weight:800;letter-spacing:.5px;margin-bottom:4px;}
+  .net-strength.High{background:rgba(34,197,94,.15);color:var(--qb-green);}
+  .net-strength.Medium{background:rgba(212,160,23,.15);color:var(--qb-gold);}
+  .intro-row{display:grid;grid-template-columns:40px 210px 1fr 170px;gap:16px;align-items:start;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+  .intro-row:last-of-type{border-bottom:none;padding-bottom:0;}
+  .intro-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:800;margin-top:2px;}
+  .intro-name{font-size:var(--qb-sm);font-weight:700;margin-bottom:2px;}
+  .intro-role{font-size:.68rem;color:var(--qb-muted);margin-bottom:6px;line-height:1.4;}
+  .intro-cat{display:inline-block;padding:2px 7px;border-radius:99px;font-size:.58rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;}
+  .intro-section-header{font-size:var(--qb-xs);font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:10px 0 4px;margin-top:6px;border-bottom:1px solid var(--qb-border);margin-bottom:4px;}
+  .intro-value-label{font-size:.6rem;font-weight:700;color:var(--qb-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+  .intro-value{font-size:var(--qb-sm);color:var(--qb-text);line-height:1.6;}
+  .intro-email{font-size:.65rem;color:var(--qb-muted);margin-bottom:4px;word-break:break-all;}
+  .intro-email-link{color:var(--qb-blue);text-decoration:none;}.intro-email-link:hover{text-decoration:underline;}
+  #footer{text-align:center;padding:24px;font-size:var(--qb-xs);color:var(--qb-muted);border-top:1px solid var(--qb-border);display:flex;align-items:center;justify-content:center;gap:12px;}
+  #footer a{color:var(--qb-gold);text-decoration:none;}
+</style>
+</head>
+<body>
+<div id="loader"><div class="logo">Q-BRANCH STRATEGY FRAMEWORK</div><div class="spinner"></div><div style="font-size:.8rem;color:#475569">Loading...</div></div>
+<div id="topbar" style="display:none">
+  <div class="topbar-brand">Q-BRANCH STRATEGY FRAMEWORK</div>
+  <div class="topbar-right">
+  <span class="view-label">VIEW</span>
+  <div class="view-tabs">
+    <button class="view-tab active" id="tab-qbranch" onclick="switchView('qbranch')">Full</button>
+    <button class="view-tab" id="tab-investor" onclick="switchView('investor')">Investor</button>
+    <button class="view-tab" id="tab-government" onclick="switchView('government')">Gov</button>
+    <button class="view-tab" id="tab-network" onclick="switchView('network')">Network</button>
+  </div>
+  <span class="badge-phase" id="topPhase">--</span>
+  <button class="btn-share" onclick="copyLink()">Share</button>
+</div>
+</div>
+<div id="hero" style="display:none"><div class="hero-inner"><div class="hero-grid">
+  <div><div class="company-name" id="heroName">--</div>
+    <div class="hero-contact-bar" id="heroContactBar"></div>
+    <div class="company-meta"><span id="heroAddress"></span></div>
+    <div class="hero-mission" id="heroMission"></div>
+    <div class="hero-elevator" id="heroElevator"></div>
+  </div>
+  <div><img id="heroLogo" class="hero-logo" style="display:none" alt="Company Logo"><div class="rl-grid">
+    <div class="rl-item"><div class="rl-label">TRL</div><div class="rl-fullname">Technology</div><div class="rl-value" id="rlTRL">--</div></div>
+    <div class="rl-item"><div class="rl-label">MRL</div><div class="rl-fullname">Manufacturing</div><div class="rl-value" id="rlMRL">--</div></div>
+    <div class="rl-item"><div class="rl-label">IRL</div><div class="rl-fullname">Investment</div><div class="rl-value" id="rlIRL">--</div></div>
+    <div class="rl-item"><div class="rl-label">CRL</div><div class="rl-fullname">Cybersecurity</div><div class="rl-value" id="rlCRL">--</div></div>
+  </div>
+  <div class="rl-summary"><div class="rl-summary-row"><div class="rl-summary-label">QBRL</div><div class="rl-summary-value" id="rlQBRL">--</div></div></div>
+  <div class="rl-legend">
+    <div class="rl-legend-bar">
+      <div class="rl-legend-seg" style="background:var(--qb-red)"></div>
+      <div class="rl-legend-seg" style="background:var(--qb-red)"></div>
+      <div class="rl-legend-seg" style="background:var(--qb-red)"></div>
+      <div class="rl-legend-seg" style="background:var(--qb-gold)"></div>
+      <div class="rl-legend-seg" style="background:var(--qb-gold)"></div>
+      <div class="rl-legend-seg" style="background:var(--qb-gold)"></div>
+      <div class="rl-legend-seg" style="background:var(--qb-green)"></div>
+      <div class="rl-legend-seg" style="background:var(--qb-green)"></div>
+      <div class="rl-legend-seg" style="background:var(--qb-green)"></div>
+    </div>
+    <div class="rl-legend-labels"><span>1–3 Early</span><span>4–6 Developing</span><span>7–9 Ready</span></div>
+    <div class="rl-abbr-key">
+      <span style="color:var(--qb-text);font-weight:700">TRL</span> Technology Readiness &nbsp;·&nbsp;
+      <span style="color:var(--qb-text);font-weight:700">MRL</span> Manufacturing &nbsp;·&nbsp;
+      <span style="color:var(--qb-text);font-weight:700">IRL</span> Investment &nbsp;·&nbsp;
+      <span style="color:var(--qb-text);font-weight:700">CRL</span> Cybersecurity &nbsp;|&nbsp;
+      <span style="color:var(--qb-text);font-weight:700">QBRL</span> Q Branch Readiness
+    </div>
+  </div>
+  </div>
+</div></div></div>
+<div id="phase-section" style="display:none"><div class="phase-inner">
+  <div><div class="phase-track" id="phaseTrack"></div><div id="federalPhaseDetail"></div></div>
+  <div class="activity-list" id="activityList"></div>
+</div></div>
+<div id="main" style="display:none"><div class="grid">
+
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(212,160,23,.12)">&#127919;</div><div class="card-title">Mission &amp; Vision</div></div>
+    <div style="font-size:var(--qb-xs);font-weight:700;color:var(--qb-gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Mission</div>
+    <div id="cardMission" style="font-size:var(--qb-sm);margin-bottom:14px;">--</div>
+    <div style="font-size:var(--qb-xs);font-weight:700;color:var(--qb-gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Vision</div>
+    <div id="cardVision" style="font-size:var(--qb-sm);">--</div>
+  </div>
+
+  <div class="card span2"><div class="card-header"><div class="card-icon" style="background:rgba(34,197,94,.12)">&#128202;</div><div class="card-title">Financial &amp; Talent Snapshot</div></div><div class="stat-grid" id="statGrid"></div></div>
+
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(212,160,23,.12)">&#127942;</div><div class="card-title">Objectives (OKR)</div></div><div id="okrSection"></div></div>
+  <div class="card span2"><div class="card-header"><div class="card-icon" style="background:rgba(30,107,255,.12)">&#128200;</div><div class="card-title">Key Performance Indicators</div></div><div id="kpiList"></div></div>
+
+  <div class="card span3"><div class="card-header"><div class="card-icon" style="background:rgba(212,160,23,.12)">&#9889;</div><div class="card-title">Situational Awareness (OODA)</div></div>
+    <div class="ooda-grid">
+      <div class="ooda-cell"><div class="ooda-cell-label">Observe</div><div class="ooda-cell-text" id="oodaObserve">--</div></div>
+      <div class="ooda-cell"><div class="ooda-cell-label">Orient</div><div class="ooda-cell-text" id="oodaOrient">--</div></div>
+      <div class="ooda-cell"><div class="ooda-cell-label">Decide</div><div class="ooda-cell-text" id="oodaDecide">--</div></div>
+      <div class="ooda-cell"><div class="ooda-cell-label">Act</div><div class="ooda-cell-text" id="oodaAct">--</div></div>
+    </div>
+  </div>
+
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(0,194,203,.12)">&#128172;</div><div class="card-title">Talking Points</div></div><div id="talkingPoints"></div></div>
+  <div class="card span2"><div class="card-header"><div class="card-icon" style="background:rgba(30,107,255,.15)">&#127757;</div><div class="card-title">Ecosystem</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:start;">
+      <div><div class="eco-label">Customers</div><div class="eco-text" id="ecoCustomers">--</div></div>
+      <div><div class="eco-label">Influencers</div><div class="eco-text" id="ecoInfluencers">--</div></div>
+      <div><div class="eco-label">Channel Partners</div><div class="eco-text" id="ecoPartners">--</div></div>
+    </div>
+  </div>
+
+  <!-- Network Introductions: between Ecosystem and Lines of Effort -->
+  <div class="card span3" id="agent6ListCard">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(212,160,23,.12)">&#128279;</div>
+      <div class="card-title">Recommended Network Introductions <span class="agent-badge">&#128279; Agent 6</span></div>
+    </div>
+    <div id="agent6ListContent">
+      <div class="agent-empty">Run Agent 6 in Airtable to surface Q-Branch's highest-value introductions for this company — investors, clients, mentors, and partners.</div>
+    </div>
+  </div>
+
+  <div class="card span3"><div class="card-header"><div class="card-icon" style="background:rgba(212,160,23,.12)">&#128197;</div><div class="card-title">Lines of Effort -- 3-Year Strategic Roadmap</div></div><div class="loe-grid" id="loeGrid"></div></div>
+
+  <div class="card span2"><div class="card-header"><div class="card-icon" style="background:rgba(0,194,203,.12)">&#127961;</div><div class="card-title">Company Positioning</div></div><div id="companyPositioning"></div></div>
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(249,115,22,.12)">&#128197;</div><div class="card-title">Key Events</div></div><div id="keyEvents" style="font-size:var(--qb-sm);">--</div></div>
+
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(0,194,203,.12)">&#128227;</div><div class="card-title">Marketing &amp; Comms</div></div><div id="marketingSection">--</div></div>
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(34,197,94,.12)">&#128176;</div><div class="card-title">Investment &amp; Capital</div></div><div id="investmentSection">--</div></div>
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(239,68,68,.12)">&#10067;</div><div class="card-title">Top Questions</div></div><div id="topQuestions" style="font-size:var(--qb-sm);">--</div></div>
+
+  <div class="card span2"><div class="card-header"><div class="card-icon" style="background:rgba(30,107,255,.12)">&#127908;</div><div class="card-title">Elevator Pitch</div></div><div id="elevatorPitchCard" style="font-size:var(--qb-sm);line-height:1.7;">--</div></div>
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(212,160,23,.12)">&#9878;&#65039;</div><div class="card-title">Core Values</div></div><div id="coreValues" style="font-size:var(--qb-sm);">--</div></div>
+  <div class="card span2"><div class="card-header"><div class="card-icon" style="background:rgba(212,160,23,.12)">&#129517;</div><div class="card-title">Guiding Principles</div></div><div id="guidingPrinciples" style="font-size:var(--qb-sm);">--</div></div>
+
+  <div class="card span3"><div class="card-header"><div class="card-icon" style="background:rgba(34,197,94,.12)">&#127963;</div><div class="card-title">Company Service Layout</div></div>
+    <table class="service-table"><thead><tr><th>#</th><th>Service</th><th>USA</th><th>International</th></tr></thead><tbody id="serviceTable"></tbody></table>
+  </div>
+
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(249,115,22,.12)">&#128640;</div><div class="card-title">Top Initiatives (90-Day)</div></div><div class="card-body" id="topInitiatives">--</div></div>
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(34,197,94,.12)">&#127919;</div><div class="card-title">Opportunities</div></div><div class="card-body" id="opportunities">--</div></div>
+  <div class="card"><div class="card-header"><div class="card-icon" style="background:rgba(239,68,68,.12)">&#128218;</div><div class="card-title">Lessons Learned</div></div><div id="lessonsLearned">--</div></div>
+
+  <div class="card span3"><div class="card-header"><div class="card-icon" style="background:rgba(30,107,255,.12)">&#127963;</div><div class="card-title">Government Organizations</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+      <div><div style="font-size:var(--qb-xs);font-weight:700;color:var(--qb-gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Strategic</div><div id="govStrategic" style="font-size:var(--qb-sm);color:var(--qb-muted);">--</div></div>
+      <div><div style="font-size:var(--qb-xs);font-weight:700;color:var(--qb-gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Operational</div><div id="govOperational" style="font-size:var(--qb-sm);color:var(--qb-muted);">--</div></div>
+      <div><div style="font-size:var(--qb-xs);font-weight:700;color:var(--qb-gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Tactical</div><div id="govTactical" style="font-size:var(--qb-sm);color:var(--qb-muted);">--</div></div>
+    </div>
+  </div>
+
+  <div class="card span3"><div class="card-header"><div class="card-icon" style="background:rgba(34,197,94,.12)">&#10003;</div><div class="card-title">Federal Compliance Checklist</div></div><div id="complianceChecklist"></div></div>
+
+  <div class="card span2"><div class="card-header"><div class="card-icon" style="background:rgba(30,107,255,.12)">&#127963;</div><div class="card-title">Government Credentials</div></div><div id="govCredentials"></div></div>
+  <div class="card span3"><div class="card-header"><div class="card-icon" style="background:rgba(30,107,255,.15)">&#128279;</div><div class="card-title">Company Presence</div></div><div class="info-links" id="infoLinks"></div></div>
+
+  <!-- Agent 3: Government Pathway Intelligence -->
+  <div class="card span3" id="agent3Card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(30,107,255,.12)">&#127963;</div>
+      <div class="card-title">Government Pathway Intelligence <span class="agent-badge">&#128279; Agent 3</span></div>
+    </div>
+    <div id="agent3Content">
+      <div class="agent-empty">Run Agent 3 in Airtable to populate government pathway analysis.</div>
+    </div>
+  </div>
+
+  <!-- Agent 4: Commercial Pathway Intelligence -->
+  <div class="card span3" id="agent4Card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(34,197,94,.12)">&#128201;</div>
+      <div class="card-title">Commercial Pathway Intelligence <span class="agent-badge">&#128279; Agent 4</span></div>
+    </div>
+    <div id="agent4Content">
+      <div class="agent-empty">Run Agent 4 in Airtable to populate commercial pathway analysis.</div>
+    </div>
+  </div>
+
+  <!-- Agent 6: Network Intelligence Match -->
+  <div class="card span3" id="agent6Card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(212,160,23,.12)">&#128101;</div>
+      <div class="card-title">Network Intelligence Match <span class="agent-badge">&#128279; Agent 6</span></div>
+    </div>
+    <div id="agent6Content">
+      <div class="agent-empty">Run Agent 6 in Airtable to surface the highest-value introductions from the Q-Branch network — investors, clients, mentors, and partners.</div>
+    </div>
+  </div>
+
+</div></div>
+<div id="footer" style="display:none"><span>Q-Branch Strategy Framework</span><span>&bull;</span><a href="https://q-branch.dev" target="_blank">q-branch.dev</a><span>&bull;</span><span>Licensed under Copperstone Ventures</span></div>
+<script>
+// Token read from URL param: ?token=<airtable-pat>&record=<recId>
+// Never hardcode credentials here — pass them at share time via URL.
+const _p=new URLSearchParams(window.location.search);
+const AT_KEY=_p.get('token')||'';
+const AT_BASE='appb0qmNnZybb2czK';
+const AT_TABLE='Q%20Slant';
+const VIEW_CARDS = {
+  investor: ['Elevator Pitch','Mission & Vision','Financial & Talent','Objectives','Key Performance','Investment & Capital','Lines of Effort','Marketing & Comms','Company Presence','Core Values','Guiding Principles','Top Initiatives','Opportunities','Lessons Learned','Key Events','Top Questions','Commercial Pathway','Network Intelligence','Recommended Network'],
+  government: ['Elevator Pitch','Company Positioning','Government Credentials','Federal Compliance','Government Organizations','Company Service','Talking Points','Situational Awareness','Guiding Principles','Lessons Learned','Key Events','Top Questions','Company Presence','Government Pathway','Network Intelligence','Recommended Network'],
+  network: ['Network Intelligence','Recommended Network'],
+  qbranch: null
+};
+function applyView(v) {
+  const cfg = VIEW_CARDS[v] || null;
+  document.querySelectorAll('#main .card').forEach(card => {
+    if (!cfg) { card.style.display = ''; return; }
+    const title = card.querySelector('.card-title');
+    if (!title) { card.style.display = ''; return; }
+    const t = title.textContent.trim();
+    card.style.display = cfg.some(n => t.includes(n)) ? '' : 'none';
+  });
+  ['qbranch','investor','government','network'].forEach(id => {
+    const tab = document.getElementById('tab-'+id);
+    if (tab) tab.className = 'view-tab' + (id === v ? ' active' : '');
+  });
+  const url = new URL(window.location.href);
+  url.searchParams.set('view', v);
+  window.history.replaceState({}, '', url);
+}
+function switchView(v) { applyView(v); }
+
+const $=id=>document.getElementById(id);
+const setText=(id,v)=>{const e=$(id);if(e)e.textContent=v||'--';};
+const setHTML=(id,v)=>{const e=$(id);if(e)e.innerHTML=v||'<span style="color:#475569">Not yet defined</span>';};
+const fmt=v=>(v||'').toString().trim();
+const ml2html=t=>t?t.split('\n').filter(l=>l.trim()).map(l=>'<p>'+l+'</p>').join(''):'';
+const DEMO={
+  'Company Name':'Paradigm Shift Technologies',
+  'Mission Statement':'To enhance warfighter lethality, weapon system reliability, and sustainment efficiency by delivering environmentally-compliant, high-performance internal barrel coating solutions that extend service life, improve accuracy, and reduce lifecycle costs for military and defense OEMs worldwide.',
+  'Vision':'To have all gun barrels within the DoD and its allies coated with EPVD technology.',
+  'Elevator Pitch':'Paradigm Shift Technologies delivers an emerging, disruptive internal barrel coating technology (EPVD) that dramatically improves weapon performance, accuracy, and service life while eliminating environmentally harmful legacy chrome plating processes.',
+  'Company Primary POC':'Eugene Yumshtyk','NAICS #1':'332994','Company Address':'Toronto, CA | Buffalo, NY',
+  'Technology Readiness Level':'9','Manufactoring Readiness Level':'10','Investment Readiness Level':'10','Cyber Security Readiness Level':'0',
+  'Burn Rate':'$150,000/yr','Employee Count':'12','Engineer Count':'6','Cap Table #1':'NASDAQ listing target','Cap Table Total':2000000,
+  'Core Values':'Integrity, Honesty, Determination, Innovation, Perseverance',
+  'Guidine Principals':'1. Warfighter-centric outcomes first\n2. Ethical defense innovation\n3. Performance proven by data\n4. Environmental and regulatory responsibility\n5. Sovereignty and supply chain resilience\n6. Innovation with purpose\n7. Long-term value creation\n8. Partner for industrialization',
+  'Observations':'Chrome plating bans accelerating globally. DoD acquisitions actively seeking compliant alternatives.',
+  'Orienting':'Position as the only proven, compliant, scalable alternative to legacy chrome plating with live DoD test fire credentials.',
+  'Deciding':'Decision 1: US HQ vs. Canadian expansion first. Decision 2: Direct DoD procurement vs. OEM partnership model.',
+  'Acting':'Within 2 weeks: Submit capability statement to USAF PM. Within 30 days: Establish Buffalo NY coating center of excellence.',
+  'Customers':'U.S. Army Materiel Command (AMC), Naval Surface Warfare Center (NSWC), PEO Soldier, Picatinny Arsenal, Defense Logistics Agency (DLA)',
+  'Influencers':'AFCEA International chapter leads, SBA PTAC counselors (Texas), retired Army/Marine Corps weapons officers, NDIA members',
+  'Channel Partners':'Barrett Firearms Manufacturing, FN America, General Dynamics Ordnance & Tactical Systems, Sig Sauer Defense, Colt Defense',
+  'Competator USA':'Milspray Military Lubricants, Birchwood Technologies, TiN coating providers, General Magnaplate, Armoloy',
+  'Capital Partners':'Shield Capital, In-Q-Tel, Lockheed Martin Ventures, SBIR/STTR Phase II (DoD), Booz Allen Ventures',
+  'Opportunities':'1. SBIR Phase II for barrel coating\n2. DoD Other Transaction Authority (OTA)\n3. NATO allied capability program',
+  'Talking Points #1':'EPVD technology delivers measurable improvements in barrel accuracy, service life, and thermal performance - validated through live test fires with four allied military branches.',
+  'Talking Points #2':'Environmental agencies worldwide are actively banning chrome plating - creating an urgent, trillion-dollar replacement opportunity with no viable alternatives in production.',
+  'Talking Points #3':'With TRL 9 and MRL 10, Paradigm Shift is production-ready today. IRL 10 signals a company positioned for rapid US market expansion.',
+  'Key Performance Indicators (KPI) #1':'Active US DoD Contract Value: $0 to $2M within 18 months',
+  'Key Performance Indicators (KPI) #2':'US Coating Capacity: 0 to 5 calibers (5.56mm-155mm) within 12 months',
+  'Key Performance Indicators (KPI) #3':'Allied Military Customers with Active Programs: 4 to 8 within 24 months',
+  'Goal 1 (Support Mission)':'Achieve first US DoD production contract',
+  'Goal 2 (Support Mission)':'Open Buffalo NY coating center of excellence',
+  'Goal 3 (Support Mission)':'Achieve CMMC Level 2 certification',
+  'Top Inititatives':'1. Submit DoD capability statement to 3 target PM offices (30 days)\n2. Establish US HQ / EOR in Buffalo NY (60 days)\n3. Complete CMMC Level 2 gap analysis (30 days)',
+  'Focus This Year':'Transition from allied military demonstrations to first US production contract. Milestones: CAGE code activation, first DoD SBIR submission, Buffalo facility LOI signed.',
+  'Lessions Learned':'1. TRL 9 companies still fail without a named PM champion - identify yours immediately.\n2. International credentials accelerate US credibility but do not replace SAM registration.\n3. Cyber readiness (CMMC) is a gate - start it now regardless of contract stage.',
+  'Company USA Incorporation':'Pending - Buffalo NY','Company International Incorporation':'Active - Toronto, Canada',
+  'Legal Counsel USA':'','Intellectual Property USA':'Pending patent application','Tax Firm USA':'','Financial Bank USA':'','Employee of Record USA':'','Joint Venture/Partnership Agreements USA':'',
+  'Supply Chain USA':'Toronto production facility (5.56mm-155mm)','Supplly Chain International':'',
+  'Website Link USA':'','LinkedIn Company':'','X Account Company':'','Data Room Link':'https://drive.google.com',
+  'Hardware / Software / Service':['Hardware','Service'],'Defense Category':['Land','Sea','Weapons','Sustainment'],
+  'Federal Agency Focus':'U.S. Army (PEO Soldier, Picatinny Arsenal)\nU.S. Navy (NSWC Crane, NSWC Dahlgren)\nDefense Logistics Agency (DLA)\nArmy Futures Command (AFC)',
+  'COCOM':['NORTHCOM','INDOPACOM','EUCOM'],
+  'DoD Alignment':'Supports DoD Organic Industrial Base modernization\nAligned to National Defense Industrial Strategy (NDIS)\nAddresses chrome plating elimination mandate (EO 13834)',
+  'SAM.gov Status':'Pending','CMMC Level':'Not Started',
+  'CL: CAGE Code':true,'CL: Website':true,
+};
+async function fetchRecord(id){
+  const r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE+'/'+id,{headers:{Authorization:'Bearer '+AT_KEY}});
+  if(!r.ok)throw new Error('AT '+r.status);
+  return (await r.json()).fields;
+}
+function detectPhase(d){
+  const trl=parseInt((d['Technology Readiness Level']||'').toString().replace(/[^0-9]/g,''))||0;
+  const irl=parseInt((d['Investment Readiness Level']||'').toString().replace(/[^0-9]/g,''))||0;
+  const c=parseInt(d['Government Customers Total'])||0;
+  if(trl>=8&&irl>=7)return 'Product Mkt Fit = Capability';
+  if(trl>=6&&c>0)return 'Problem / Sol Validation';
+  if(trl>=4)return 'Interest';
+  return 'Exploration';
+}
+function renderPhaseTrack(cur){
+  const phases=['Exploration','Interest','Problem / Sol Validation','Product Mkt Fit = Capability'];
+  const idx=phases.findIndex(p=>cur.indexOf(p.split(' ')[0])>=0);
+  $('phaseTrack').innerHTML=phases.map((p,i)=>`<div class="phase-step ${i<idx?'completed':i===idx?'active':''}">${p}</div>`).join('');
+}
+function renderActivityList(d){
+  const trl=parseInt((d['Technology Readiness Level']||'').toString().replace(/[^0-9]/g,''))||0;
+  const steps=[{l:'Start',d:true},{l:'Feasibility',d:trl>=2},{l:'Proof of Concept',d:trl>=4},{l:'Research & Dev',d:trl>=5},{l:'Prototype',d:trl>=6},{l:'Testing & Eval',d:trl>=7},{l:'Operation Ready',d:trl>=9}];
+  const active=steps.filter(s=>s.d).length-1;
+  $('activityList').innerHTML=steps.map((s,i)=>`<div class="activity-item ${s.d?(i===active?'active':'done'):''}"><div class="activity-num">${i+1}</div><span>${s.l}</span></div>`).join('');
+}
+function renderStats(d){
+  const items=[{l:'Burn Rate',v:d['Burn Rate']},{l:'Employees',v:d['Employee Count']},{l:'Engineers',v:d['Engineer Count']},{l:'Gov Customers',v:d['Government Customers Total']||'0'},{l:'Commercial',v:d['Commercial Customers Total']||'0'},{l:'Open Contracts',v:d['Current Government Contracts (Open)']||'0'}];
+  $('statGrid').innerHTML=items.map(i=>`<div class="stat-item"><div class="stat-label">${i.l}</div><div class="stat-value">${i.v||'--'}</div></div>`).join('');
+}
+function renderOKR(d){
+  const goals=[d['Goal 1 (Support Mission)'],d['Goal 2 (Support Mission)'],d['Goal 3 (Support Mission)'],d['Goal 4 (Support Mission)']].filter(Boolean);
+  if(!goals.length){setHTML('okrSection','<span style="color:#475569">No objectives defined</span>');return;}
+  $('okrSection').innerHTML=goals.map((g,i)=>`<div class="okr-block"><div class="okr-label">Objective ${i+1}</div><div class="okr-text">${g}</div></div>`).join('');
+}
+function renderKPIs(d){
+  const k=[d['Key Performance Indicators (KPI) #1'],d['Key Performance Indicators (KPI) #2'],d['Key Performance Indicators (KPI) #3']].filter(Boolean);
+  $('kpiList').innerHTML=k.map(t=>`<div class="kpi-item">${t}</div>`).join('')||'<span style="color:#475569">KPIs not yet defined</span>';
+}
+function renderTalkingPoints(d){
+  const t=[d['Talking Points #1'],d['Talking Points #2'],d['Talking Points #3']].filter(Boolean);
+  $('talkingPoints').innerHTML=t.map(x=>`<div class="tp-item">${x}</div>`).join('')||'<span style="color:#475569">Not yet generated</span>';
+}
+function loeCell(text){
+  if(!text)return '<span style="color:#475569">TBD</span>';
+  return text.split('\n').filter(l=>l.trim()).map(l=>`<div class="loe-step"><span class="loe-arrow">-&gt;</span><span>${l.replace(/^\d+\.\s*/,'').replace(/^[-&gt;]\s*/,'')}</span></div>`).join('');
+}
+function renderLinesOfEffort(d){
+  const yr=new Date().getFullYear();
+  const opps=(d['Opportunities']||'').split('\n').filter(l=>l.trim());
+  const mktFb=[d['Channel Partners']?'Channel: '+d['Channel Partners'].split(',').slice(0,2).join(', '):null,d['Influencers']?'Voices: '+d['Influencers'].split(',').slice(0,2).join(', '):null,'Capability statement to 3 PM offices'].filter(Boolean).join('\n');
+  const invFb=[d['Burn Rate']?'Burn rate: '+d['Burn Rate']:null,d['Cap Table #1']?'Cap: '+d['Cap Table #1']:null,'SBIR Phase II application'].filter(Boolean).join('\n');
+  const rows=[
+    {l:'Business<br>Milestones',y1:d['LOE Business Y1']||d['Focus This Year']||d['Top Inititatives'],y2:d['LOE Business Y2']||opps[0]||'Scale operations & win 2 prime agreements',y3:d['LOE Business Y3']||opps[1]||'Market leadership & licensing model active'},
+    {l:'Product /<br>Service',y1:d['LOE Product Y1']||d['Top Inititatives'],y2:d['LOE Product Y2']||'Expand platform coverage',y3:d['LOE Product Y3']||'License model fully operational'},
+    {l:'Marketing &amp;<br>Comms',y1:d['LOE Marketing Y1']||mktFb,y2:d['LOE Marketing Y2']||'DSEI/AUSA presence\nCase study publications',y3:d['LOE Marketing Y3']||'Category-defining brand'},
+    {l:'Investment',y1:d['LOE Investment Y1']||invFb,y2:d['LOE Investment Y2']||'Series A / strategic co-investment',y3:d['LOE Investment Y3']||'Series B / partnership model'},
+    {l:'Resources',y1:d['LOE Resource Y1']||'Hire VP BD\nSecure EOR partner\nEngage SBIR program officer',y2:d['LOE Resource Y2']||'Hire contracts manager\nExpand engineering team',y3:d['LOE Resource Y3']||'Full US management team\nScaled production workforce'},
+    {l:'Government<br>Activity',y1:d['LOE Government Y1']||d['Current Government Contracts (Open)']||'CAGE code activation\nSAM.gov registration\nFirst OTA/SBIR submission',y2:d['LOE Government Y2']||'2+ active DoD contracts',y3:d['LOE Government Y3']||'Multi-year DoD contract\nNATO procurement framework'},
+    {l:'Demonstrations',y1:d['LOE Demonstrations Y1']||'Live-fire demo scheduled\nCapability demo to key stakeholder',y2:d['LOE Demonstrations Y2']||'Formal evaluation event\nTrade show live demo',y3:d['LOE Demonstrations Y3']||'Multi-stakeholder standardization demo'},
+  ];
+  const hdr=`<div></div><div class="loe-year-header" style="background:rgba(30,107,255,.1);color:var(--qb-blue);">YEAR 1 -- ${yr}</div><div class="loe-year-header" style="background:rgba(0,194,203,.07);color:var(--qb-cyan);">YEAR 2 -- ${yr+1}</div><div class="loe-year-header" style="background:rgba(34,197,94,.07);color:var(--qb-green);">YEAR 3 -- ${yr+2}</div>`;
+  $('loeGrid').innerHTML=hdr+rows.map(r=>`<div class="loe-row-label">${r.l}</div><div class="loe-cell y1">${loeCell(r.y1)}</div><div class="loe-cell y2">${loeCell(r.y2)}</div><div class="loe-cell y3">${loeCell(r.y3)}</div>`).join('');
+}
+function renderCompanyPositioning(d){
+  const hw=d['Hardware / Software / Service']||[];
+  const dc=d['Defense Category']||[];
+  const cocom=d['COCOM']||[];
+  const badges=a=>Array.isArray(a)?a.map(x=>`<span class="pos-badge">${x}</span>`).join(''):'<span style="color:#475569">--</span>';
+  const parts=[
+    {l:'Type',v:badges(hw)},
+    {l:'Defense Category',v:badges(dc)},
+    {l:'COCOM',v:badges(cocom)},
+    {l:'Federal Agency Focus',v:d['Federal Agency Focus']?d['Federal Agency Focus'].replace(/\n/g,'<br>'):'<span style="color:#475569">--</span>'},
+  ];
+  let html='<div class="pos-grid">'+parts.slice(0,3).map(p=>`<div class="pos-item"><div class="pos-label">${p.l}</div><div>${p.v}</div></div>`).join('')+'</div>';
+  if(d['DoD Alignment']){html+=`<div style="margin-top:8px"><div style="font-size:var(--qb-xs);font-weight:700;color:var(--qb-cyan);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">DoD Alignment</div><div style="font-size:var(--qb-sm)">${d['DoD Alignment'].replace(/\n/g,'<br>')}</div></div>`;}
+  if(d['Federal Agency Focus']){html+=`<div style="margin-top:8px"><div style="font-size:var(--qb-xs);font-weight:700;color:var(--qb-cyan);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Federal Agency Focus</div><div style="font-size:var(--qb-sm)">${d['Federal Agency Focus'].replace(/\n/g,'<br>')}</div></div>`;}
+  $('companyPositioning').innerHTML=html;
+}
+function renderMarketing(d){
+  const g=[{l:'Channel Partners',v:d['Channel Partners']},{l:'Key Influencers',v:d['Influencers']},{l:'Market Opportunities',v:d['Opportunities']},{l:'Competitor Landscape',v:d['Competator USA']}].filter(x=>x.v);
+  if(!g.length){$('marketingSection').innerHTML='<span style="color:#475569">Not yet defined</span>';return;}
+  $('marketingSection').innerHTML=g.map(x=>`<div class="mkt-group"><div class="mkt-label">${x.l}</div><div class="mkt-text">${x.v}</div></div>`).join('');
+}
+function renderInvestment(d){
+  const items=[{l:'Cap Table #1',v:d['Cap Table #1']},{l:'Cap Table #2',v:d['Cap Table #2']},{l:'Cap Table #3',v:d['Cap Table #3']},{l:'Total Capitalization',v:d['Cap Table Total']?'$'+Number(d['Cap Table Total']).toLocaleString():null},{l:'Annual Burn Rate',v:d['Burn Rate']},{l:'Capital Partners',v:d['Capital Partners']}].filter(i=>i.v);
+  if(!items.length){$('investmentSection').innerHTML='<span style="color:#475569">Not yet provided</span>';return;}
+  $('investmentSection').innerHTML='<div class="inv-grid">'+items.map(i=>`<div class="inv-item"><div class="inv-label">${i.l}</div><div class="inv-value">${i.v}</div></div>`).join('')+'</div>';
+}
+function renderServiceTable(d){
+  const svcs=[{n:'Incorporation',u:d['Company USA Incorporation'],i:d['Company International Incorporation']},{n:'Legal Counsel',u:d['Legal Counsel USA'],i:d['Legal Counsel International']},{n:'Intell. Property',u:d['Intellectual Property USA'],i:d['Intellectual Property International']},{n:'Immigration',u:d['Legal Immigration Status'],i:''},{n:'Tax / CPA',u:d['Tax Firm USA'],i:d['Tax Firm International']},{n:'Financial Bank',u:d['Financial Bank USA'],i:d['Financial Bank International']},{n:'Employee of Rec.',u:d['Employee of Record USA'],i:''},{n:'Joint Venture',u:d['Joint Venture/Partnership Agreements USA'],i:''},{n:'Supply Chain',u:d['Supply Chain USA'],i:d['Supplly Chain International']}];
+  $('serviceTable').innerHTML=svcs.map((s,i)=>`<tr><td>${i+1}</td><td>${s.n}</td><td>${s.u?'<span class="status-dot filled"></span>'+s.u:'<span class="status-dot empty"></span><span style="color:#475569;font-size:.75rem">Needed</span>'}</td><td>${s.i?'<span class="status-dot filled"></span>'+s.i:'<span class="status-dot empty"></span><span style="color:#475569;font-size:.75rem">--</span>'}</td></tr>`).join('');
+}
+function renderLessons(d){
+  const t=d['Lessions Learned']||'';
+  if(!t){$('lessonsLearned').innerHTML='<span style="color:#475569">No lessons recorded yet</span>';return;}
+  $('lessonsLearned').innerHTML=t.split('\n').filter(l=>l.trim()).map(l=>`<div class="lesson-item">${l}</div>`).join('');
+}
+function renderComplianceChecklist(d){
+  const federal=[
+    {l:'CMMC Certification', k:'CL: CMMC Certification', url:'https://dodcio.defense.gov/CMMC/'},
+    {l:'ATO',                k:'CL: ATO',                url:null},
+    {l:'GSA Catalog',        k:'CL: GSA Catalog',        url:'https://www.gsaelibrary.gsa.gov/'},
+    {l:'UEI',                k:'CL: UEI',                url:'https://sam.gov/'},
+    {l:'CAGE Code',          k:'CL: CAGE Code',          url:'https://sam.gov/'},
+    {l:'Letters of Intent',  k:'CL: Letters of Intent',  url:null},
+    {l:'White Paper',        k:'CL: White Paper',        url:()=>d['White Paper URL']||null},
+    {l:'Quad Chart',         k:'CL: Quad Chart',         url:()=>d['Quad Chart URL']||null},
+    {l:'SBIR/STTR Matrix',   k:'CL: SBIR/STTR Matrix',  url:'https://sbir.gov/'},
+  ];
+  const digital=[
+    {l:'Website',      k:'CL: Website',      url:()=>d['Website Link USA']||null},
+    {l:'Product Video',k:'CL: Product Video',url:()=>d['Product Video URL']||null},
+    {l:'LinkedIn',     k:'CL: LinkedIn',     url:()=>d['LinkedIn Company']||null},
+    {l:'Branding Kit', k:'CL: Branding Kit', url:()=>d['Branding Kit URL']||null},
+    {l:'Sales Sheet',  k:'CL: Sales Sheet',  url:()=>d['Sales Sheet URL']||null},
+    {l:'Podcast',      k:'CL: Podcast',      url:()=>d['Podcast URL']||null},
+  ];
+  const item=(x)=>{
+    const done=!!d[x.k];
+    const href=typeof x.url==='function'?x.url():x.url;
+    const inner=done&&href
+      ?`<a class="cl-link" href="${href}" target="_blank" rel="noopener">${x.l}<span class="cl-ext">↗</span></a>`
+      :x.l;
+    return `<div class="cl-item${done?' done':''}"><div class="cl-check"></div>${inner}</div>`;
+  };
+  $('complianceChecklist').innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"><div><div style="font-size:var(--qb-xs);font-weight:700;color:var(--qb-gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Federal Compliance</div><div class="cl-grid">'+federal.map(item).join('')+'</div></div><div><div style="font-size:var(--qb-xs);font-weight:700;color:var(--qb-gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Digital Presence</div><div class="cl-grid">'+digital.map(item).join('')+'</div></div></div>';
+}
+function renderGovCredentials(d){
+  const sc={'Active':'green','Pending':'gold','Expired':'red','Not Registered':'gray'};
+  const cc={'Level 1':'gold','Level 2':'blue','Level 3':'green','Not Started':'gray'};
+  const xc={'None':'gray','Public Trust':'gold','Secret':'blue','Top Secret':'red','TS/SCI':'red'};
+  const ids=[{l:'CAGE Code',v:d['CAGE CODE']},{l:'DUNS / UEI',v:d['DUNS #']},{l:'EIN',v:d['EIN #']},{l:'GSA SIN',v:[d['GSA SIN #1'],d['GSA SIN #2'],d['GSA SIN #3']].filter(Boolean).join(', ')||null},{l:'NAICS',v:[d['NAICS #1'],d['NAICS #2']].filter(Boolean).join(' / ')||null}].filter(i=>i.v);
+  const grid=ids.length?'<div class="gov-grid">'+ids.map(i=>`<div class="gov-item"><div class="gov-item-label">${i.l}</div><div class="gov-item-value">${i.v}</div></div>`).join('')+'</div>':'';
+  const bp=[];
+  if(d['SAM.gov Status'])bp.push(`<span class="gov-badge ${sc[d['SAM.gov Status']]||'gray'}">SAM.gov: ${d['SAM.gov Status']}</span>`);
+  if(d['CMMC Level'])bp.push(`<span class="gov-badge ${cc[d['CMMC Level']]||'gray'}">CMMC ${d['CMMC Level']}</span>`);
+  if(d['Security Clearance'])bp.push(`<span class="gov-badge ${xc[d['Security Clearance']]||'gray'}">${d['Security Clearance']} Clearance</span>`);
+  const sa=d['Set-Aside Status']||[];if(Array.isArray(sa))sa.forEach(s=>bp.push(`<span class="gov-badge blue">${s}</span>`));
+  const badges=bp.join('');
+  const contracts=d['Active Contract Numbers']?`<div style="margin-top:12px"><div style="font-size:var(--qb-xs);font-weight:700;color:var(--qb-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Active Contracts</div><div style="font-size:var(--qb-sm)">${d['Active Contract Numbers'].replace(/\n/g,'<br>')}</div></div>`:'';
+  const cap=d['Federal Capability Sheet URL']?`<a class="info-link" href="${d['Federal Capability Sheet URL']}" target="_blank" style="margin-top:12px;display:inline-block">Capability Sheet</a>`:'';
+  const content=grid+(badges?`<div style="margin-bottom:8px">${badges}</div>`:'')+contracts+cap;
+  $('govCredentials').innerHTML=content||'<span style="color:#475569;font-size:var(--qb-sm)">Government credentials not yet entered</span>';
+}
+function renderLinks(d){
+  const links=[{l:'Website',u:d['Website Link USA']},{l:'LinkedIn',u:d['LinkedIn Company']},{l:'Twitter/X',u:d['X Account Company']},{l:'Data Room',u:d['Data Room Link']},{l:'Product Video',u:d['Product Video URL']},{l:'Sales Sheet',u:d['Sales Sheet URL']},{l:'Podcast',u:d['Podcast URL']}];
+  $('infoLinks').innerHTML=links.map(x=>x.u?`<a class="info-link" href="${x.u}" target="_blank">${x.l}</a>`:`<span class="info-link empty">${x.l}</span>`).join('');
+}
+function copyLink(){navigator.clipboard.writeText(window.location.href);const b=document.querySelector('.btn-share');const o=b.textContent;b.textContent='Copied!';setTimeout(()=>b.textContent=o,2000);}
+
+function renderAgent3(d){
+  const summary  = d['Agent 3: Pathway Summary'];
+  const federal  = d['Agent 3: Federal Pathway'];
+  const sbir     = d['Agent 3: SBIR/STTR Pathway'];
+  const stateL   = d['Agent 3: State & Local Pathway'];
+  const openOpps = d['Agent 3: Open Opportunities'];
+  const lastRun  = d['Agent 3: Last Run'];
+  if(!summary && !federal && !sbir){
+    $('agent3Content').innerHTML='<div class="agent-empty">Run Agent 3 in Airtable to populate government pathway analysis (SAM.gov, SBIR, NSF, TX state bids, consortiums).</div>';
+    return;
+  }
+  const secs=[
+    {label:'Pathway Summary',v:summary,color:'var(--qb-gold)'},
+    {label:'Federal Pathway',v:federal,color:'var(--qb-blue)'},
+    {label:'SBIR / STTR Pathway',v:sbir,color:'var(--qb-cyan)'},
+    {label:'State & Local Pathway',v:stateL,color:'var(--qb-green)'},
+    {label:'Open Opportunities',v:openOpps,color:'var(--qb-orange)'},
+  ].filter(s=>s.v);
+  $('agent3Content').innerHTML=
+    '<div class="agent-grid">' +
+    secs.map((s,i)=>`<div class="agent-section"><div class="agent-section-label" style="color:${s.color}">${s.label}</div><div class="agent-section-text">${s.v}</div></div>`).join('') +
+    '</div>' +
+    (lastRun?`<div class="agent-last-run">Last run by Agent 3: ${lastRun}</div>`:'');
+}
+function renderAgent4(d){
+  const summary  = d['Agent 4: Commercial Summary'];
+  const retail   = d['Agent 4: Retail Pathway'];
+  const b2b      = d['Agent 4: B2B Pathway'];
+  const openOpps = d['Agent 4: Open Commercial Opportunities'];
+  const lastRun  = d['Agent 4: Last Run'];
+  if(!summary && !retail && !b2b){
+    $('agent4Content').innerHTML='<div class="agent-empty">Run Agent 4 in Airtable to populate commercial pathway analysis (retail onboarding, HEB, Walmart, B2B opportunities).</div>';
+    return;
+  }
+  const secs=[
+    {label:'Commercial Summary',v:summary,color:'var(--qb-green)'},
+    {label:'Retail Pathway',v:retail,color:'var(--qb-cyan)'},
+    {label:'B2B Pathway',v:b2b,color:'var(--qb-blue)'},
+    {label:'Open Commercial Opportunities',v:openOpps,color:'var(--qb-orange)'},
+  ].filter(s=>s.v);
+  $('agent4Content').innerHTML=
+    '<div class="agent-grid">' +
+    secs.map(s=>`<div class="agent-section"><div class="agent-section-label" style="color:${s.color}">${s.label}</div><div class="agent-section-text">${s.v}</div></div>`).join('') +
+    '</div>' +
+    (lastRun?`<div class="agent-last-run">Last run by Agent 4: ${lastRun}</div>`:'');
+}
+function renderAgent6List(d){
+  const CAT=[
+    {key:'Network: Investors',label:'Investors',    color:'var(--qb-green)',bg:'rgba(34,197,94,.14)'},
+    {key:'Network: Clients',  label:'Clients',      color:'var(--qb-blue)', bg:'rgba(30,107,255,.14)'},
+    {key:'Network: Mentors',  label:'Mentors',      color:'var(--qb-gold)', bg:'rgba(212,160,23,.14)'},
+    {key:'Network: Partners', label:'Partners',     color:'var(--qb-cyan)', bg:'rgba(0,194,203,.14)'},
+  ];
+  const lastRun=d['Network: Last Run'];
+  const hasData=CAT.some(c=>d[c.key]);
+  if(!hasData){
+    $('agent6ListContent').innerHTML='<div class="agent-empty">Run Agent 6 in Airtable to surface Q-Branch\'s highest-value introductions for this company.</div>';
+    return;
+  }
+  function initials(name){return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();}
+  let html='';
+  CAT.forEach(cat=>{
+    const items=(typeof parseNetMatches==='function')?parseNetMatches(d[cat.key]):[];
+    if(!items.length)return;
+    html+=`<div class="intro-section-header" style="color:${cat.color}">${cat.label}</div>`;
+    items.forEach(m=>{
+      const init=initials(m.name);
+      html+=`<div class="intro-row">
+        <div class="intro-avatar" style="background:${cat.bg};color:${cat.color}">${init}</div>
+        <div>
+          <div class="intro-name">${m.name}</div>
+          <div class="intro-role">${m.title}${m.company?' @ '+m.company:''}</div>
+          <span class="intro-cat" style="background:${cat.bg};color:${cat.color}">${cat.label.slice(0,-1)}</span>&ensp;<span class="net-strength ${m.strength}" style="margin-bottom:0">${m.strength}</span>
+        </div>
+        <div>
+          <div class="intro-value-label">What they bring</div>
+          <div class="intro-value">${m.reason}</div>
+        </div>
+        <div>
+          ${m.email?`<div class="intro-email"><a class="intro-email-link" href="mailto:${m.email}">${m.email}</a></div>`:''}
+        </div>
+      </div>`;
+    });
+  });
+  $('agent6ListContent').innerHTML=html+(lastRun?`<div class="agent-last-run" style="margin-top:10px">Last run by Agent 6: ${lastRun}</div>`:'');
+}
+function parseNetMatches(text){
+  if(!text)return[];
+  return text.trim().split(/\n\n+/).map(block=>{
+    const lines=block.split('\n').map(l=>l.replace(/^\s+/,''));
+    const m1=lines[0].match(/^\d+\.\s+(.+?)\s{2,}\[(High|Medium)\]/);
+    if(!m1)return null;
+    const name=m1[1],strength=m1[2];
+    const roleLine=lines[1]||'';
+    const atIdx=roleLine.indexOf(' @ ');
+    const title=atIdx>=0?roleLine.slice(0,atIdx):'';
+    const company=atIdx>=0?roleLine.slice(atIdx+3):'';
+    const emailLine=lines.slice(2).find(l=>l.includes('@'));
+    const reason=lines.slice(2).filter(l=>!l.includes('@')).join(' ').trim();
+    return{name,strength,title:title.trim(),company:company.trim(),email:emailLine||'',reason};
+  }).filter(Boolean);
+}
+function netColumn(text,label,color){
+  const items=parseNetMatches(text);
+  if(!items.length)return`<div><div class="net-col-label" style="color:${color};border-color:${color}40">${label}</div><div style="color:#475569;font-size:var(--qb-sm);font-style:italic">None identified</div></div>`;
+  const cards=items.map(m=>`<div class="net-contact ${(m.strength||'').toLowerCase()}"><span class="net-strength ${m.strength}">${m.strength}</span><div class="net-contact-name">${m.name}</div><div class="net-contact-role">${m.title} @ ${m.company}</div>${m.email?`<div style="font-size:.65rem;color:var(--qb-muted);margin-bottom:4px">${m.email}</div>`:''}<div class="net-contact-reason">${m.reason}</div></div>`).join('');
+  return`<div><div class="net-col-label" style="color:${color};border-color:${color}40">${label}</div>${cards}</div>`;
+}
+function renderAgent6(d){
+  const investors=d['Network: Investors'],clients=d['Network: Clients'];
+  const mentors=d['Network: Mentors'],partners=d['Network: Partners'];
+  const lastRun=d['Network: Last Run'];
+  if(!investors&&!clients&&!mentors&&!partners){
+    $('agent6Content').innerHTML='<div class="agent-empty">Run Agent 6 in Airtable to surface the highest-value introductions from the Q-Branch network — investors, clients, mentors, and partners.</div>';
+    return;
+  }
+  $('agent6Content').innerHTML=
+    '<div class="net-grid">'+
+    netColumn(investors,'Investors','var(--qb-green)')+
+    netColumn(clients,'Clients','var(--qb-blue)')+
+    netColumn(mentors,'Mentors','var(--qb-gold)')+
+    netColumn(partners,'Partners','var(--qb-cyan)')+
+    '</div>'+
+    (lastRun?`<div class="agent-last-run">Last run by Agent 6: ${lastRun}</div>`:'');
+}
+// Action 1 — Form vs AI source badges
+const CARD_SOURCES={
+  'Mission & Vision':'form','Financial & Talent':'form','Objectives':'form',
+  'Key Performance':'form','Situational Awareness':'form','Talking Points':'form',
+  'Ecosystem':'ai2','Lines of Effort':'ai','Company Positioning':'form',
+  'Key Events':'form','Marketing & Comms':'form','Investment & Capital':'form',
+  'Elevator Pitch':'form','Core Values':'form','Guiding Principles':'form',
+  'Company Service':'form','Top Initiatives':'form','Opportunities':'form',
+  'Lessons Learned':'form','Government Organizations':'form',
+  'Federal Compliance':'form','Government Credentials':'form','Company Presence':'form',
+};
+function injectSourceBadges(){
+  document.querySelectorAll('.card-title').forEach(el=>{
+    if(el.querySelector('.source-badge'))return;
+    const t=el.textContent.trim();
+    for(const[key,type]of Object.entries(CARD_SOURCES)){
+      if(t.includes(key)){
+        if(type==='form')
+          el.insertAdjacentHTML('beforeend','<span class="source-badge form">Form</span>');
+        else if(type==='ai2')
+          el.insertAdjacentHTML('beforeend','<span class="source-badge ai">AI · Agent 2</span>');
+        else if(type==='ai')
+          el.insertAdjacentHTML('beforeend','<span class="source-badge ai">AI Suggested</span>');
+        break;
+      }
+    }
+  });
+}
+
+// Action 3 — Hero contact bar
+function renderContactBar(d){
+  const items=[];
+  const phone=d['Company Phone']||d['Primary Phone']||d['Company Primary POC Phone']||d['POC Phone'];
+  const poc=d['Company Primary POC']||d['Company Secondary POC'];
+  if(poc)items.push(`<div class="hcb-item">&#128100; ${poc}</div>`);
+  if(phone)items.push(`<div class="hcb-item">&#9742; <a href="tel:${phone.toString().replace(/[^0-9+]/g,'')}">${phone}</a></div>`);
+  const web=d['Website Link USA'];
+  if(web)items.push(`<div class="hcb-item">&#127760; <a href="${web}" target="_blank" rel="noopener">${web.replace(/^https?:\/\//,'')}</a></div>`);
+  const li=d['LinkedIn Company'];
+  if(li)items.push(`<div class="hcb-item"><a href="${li}" target="_blank" rel="noopener">LinkedIn ↗</a></div>`);
+  const email=d['Company Email']||d['Primary Email'];
+  if(email)items.push(`<div class="hcb-item">&#9993; <a href="mailto:${email}">${email}</a></div>`);
+  $('heroContactBar').innerHTML=items.join('<span class="hcb-sep">·</span>');
+}
+
+// Action 5 — RL value color-coding
+function colorRL(id,val){
+  const n=parseInt(val)||0;
+  const el=$(id);if(!el)return;
+  el.classList.remove('rl-low','rl-mid','rl-high');
+  if(n>=1&&n<=3)el.classList.add('rl-low');
+  else if(n>=4&&n<=6)el.classList.add('rl-mid');
+  else if(n>=7)el.classList.add('rl-high');
+}
+
+function render(d){
+  const phase=detectPhase(d);
+  $('topPhase').textContent=phase;
+  document.title=fmt(d['Company Name'])+' -- Q-Branch Strategy Framework';
+  setText('heroName',d['Company Name']);
+  renderContactBar(d);
+  setText('heroAddress',d['Company Address']||[d['Company City'],d['Company Headquarters State']].filter(Boolean).join(', '));
+  setText('heroMission',d['Mission Statement']);
+  setText('heroElevator',d['Elevator Pitch']);const _logoArr=d['Picture'];if(_logoArr&&_logoArr[0]&&_logoArr[0].url){const _limg=$('heroLogo');_limg.src=_logoArr[0].url;_limg.style.display='block';}else{$('heroLogo').style.display='none';}
+  const rl=v=>(v||'--').toString().replace(/[^0-9]/g,'')||'--';
+  const rlVals={TRL:rl(d['Technology Readiness Level']),MRL:rl(d['Manufactoring Readiness Level']),IRL:rl(d['Investment Readiness Level']),CRL:rl(d['Cyber Security Readiness Level'])};
+  setText('rlTRL',rlVals.TRL);setText('rlMRL',rlVals.MRL);setText('rlIRL',rlVals.IRL);setText('rlCRL',rlVals.CRL);
+  colorRL('rlTRL',rlVals.TRL);colorRL('rlMRL',rlVals.MRL);colorRL('rlIRL',rlVals.IRL);colorRL('rlCRL',rlVals.CRL);
+  const qbrlVals=Object.values(rlVals).filter(v=>v!=='--').map(Number);
+  setText('rlQBRL',qbrlVals.length?(qbrlVals.reduce((a,b)=>a+b,0)/qbrlVals.length).toFixed(1):'--');
+  renderPhaseTrack(phase);renderActivityList(d);
+  setHTML('federalPhaseDetail',ml2html(d['Focus This Year']||d['Opportunities']));
+  setText('cardMission',d['Mission Statement']);setText('cardVision',d['Vision']);
+  renderStats(d);renderOKR(d);renderKPIs(d);
+  setText('oodaObserve',d['Observations']);setText('oodaOrient',d['Orienting']);
+  setText('oodaDecide',d['Deciding']);setText('oodaAct',d['Acting']);
+  renderTalkingPoints(d);
+  setText('ecoCustomers',d['Customers']);setText('ecoInfluencers',d['Influencers']);setText('ecoPartners',d['Channel Partners']);
+  renderLinesOfEffort(d);
+  renderCompanyPositioning(d);
+  setHTML('keyEvents',ml2html(d['Key Events']));
+  renderMarketing(d);renderInvestment(d);
+  setHTML('topQuestions',ml2html(d['Top Questions']));
+  setText('elevatorPitchCard',d['Elevator Pitch']);
+  setText('coreValues',d['Core Values']);
+  setHTML('guidingPrinciples',ml2html(d['Guidine Principals']||d['Guiding Principals']));
+  renderServiceTable(d);
+  setHTML('topInitiatives',ml2html(d['Top Inititatives']));
+  setHTML('opportunities',ml2html(d['Opportunities']));
+  renderLessons(d);
+  setText('govStrategic',d['Government Strategic Organization']);
+  setText('govOperational',d['Government Operational Organizations']);
+  setText('govTactical',d['Tactical Government Organizations']);
+  renderComplianceChecklist(d);
+  renderGovCredentials(d);
+  renderLinks(d);renderAgent3(d);renderAgent4(d);renderAgent6List(d);renderAgent6(d);
+  injectSourceBadges();
+  const _view=new URLSearchParams(window.location.search).get('view')||'qbranch';applyView(_view);
+  $('loader').style.display='none';$('topbar').style.display='';$('hero').style.display='';
+  $('phase-section').style.display='';$('main').style.display='';$('footer').style.display='';
+}
+async function init(){
+  const rid=_p.get('record');
+  if(!rid){render(DEMO);return;}
+  // Validate Airtable record ID format before using in API call
+  if(!/^rec[a-zA-Z0-9]{14}$/.test(rid)){console.warn('Invalid record ID format');render(DEMO);return;}
+  if(!AT_KEY){console.warn('No token provided — add ?token=<pat> to URL');render(DEMO);return;}
+  try{const live=await fetchRecord(rid);if(live&&Object.keys(live).length>0){render(live);}else{render(DEMO);}}
+  catch(e){console.warn('fetch failed',e.message);render(DEMO);}
+}
+let _fb=setTimeout(()=>render(DEMO),6000);
+const _or=render;render=d=>{clearTimeout(_fb);_or(d);};
+init();
+</script>
+</body>
+</html>
