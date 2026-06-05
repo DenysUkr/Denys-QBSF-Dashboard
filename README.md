@@ -16,23 +16,23 @@ When someone makes a change, the website fixes itself about **1 minute** later. 
 
 ## ✏️ How do I change the way it looks?
 
-You don't type any computer code. You **ask a robot helper** (a free AI like ChatGPT or Claude) to do it for you.
+You don't type any computer code, and you **don't copy-paste anymore**. You just **tell a robot helper** (a free AI like ChatGPT or Claude) what you want, and it changes the website for you.
 
-1. Open the file named **CONTRIBUTOR_AGENT_BRIEF.md**
-   👉 https://github.com/DenysUkr/Denys-QBSF-Dashboard/blob/main/CONTRIBUTOR_AGENT_BRIEF.md
-   Copy **all** of the words in it.
-2. Go to ChatGPT or Claude. Paste those words in as your **first message**.
-3. Now tell the robot what you want, in normal words.
+**First time only — connect the robot to GitHub (about 1 minute):**
+In ChatGPT or Claude, open **Settings → Connectors** (sometimes called "Apps" or "Add apps") → connect **GitHub** → allow it to reach **DenysUkr/Denys-QBSF-Dashboard**. You only do this once, ever.
+
+**Every time you want a change:**
+1. Open the magic-words file **CONTRIBUTOR_AGENT_BRIEF.md**
+   👉 https://github.com/DenysUkr/Denys-QBSF-Dashboard/blob/main/CONTRIBUTOR_AGENT_BRIEF.md — copy **all** of it.
+2. Paste it into the robot (ChatGPT or Claude) as your **first message**.
+3. Tell the robot what you want, in normal words.
    *Example:* "Make the title bigger and the background light blue."
-4. The robot replies with **one big block of text**. That block *is* the new website. Copy **all** of it.
-5. Put it on the website:
-   - Open the edit page 👉 https://github.com/DenysUkr/Denys-QBSF-Dashboard/edit/main/index.html
-   - Press **Ctrl+A** (selects everything), then **Delete**.
-   - **Paste** the block the robot gave you.
-   - Scroll to the bottom and click the green **Commit changes** button.
-6. Wait **1 minute**, then refresh the website. Your change is live! 🎉
+4. The robot **updates the website by itself** and tells you when it's done. ✅
+5. Wait about **1 minute**, then refresh the website. Your change is live! 🎉
 
-> 😌 Don't worry — you can't break anything for good. If it looks wrong, just ask the robot again and paste the new version on top.
+No copying. No pasting into GitHub. The robot does all of it.
+
+> 😌 You can't break anything for good. If something looks off, just tell the robot *"that didn't look right, please fix it"* and it will.
 
 ---
 
@@ -78,7 +78,7 @@ That's it, forever. *(If you skip this, the owner can still add people by hand �
 ## ❓ If the website looks broken
 
 - **Did you wait a full minute and refresh?** Changes take about 1 minute to appear.
-- **Did you paste the WHOLE thing** the robot gave you — from the very first line to the very last? Half a file breaks the page. Just ask the robot for the full file again and paste it once more.
+- **Still wrong?** Tell the robot *"that broke the page — please fix it"* or *"undo your last change."* It can look at the website and put it right.
 
 ---
 
