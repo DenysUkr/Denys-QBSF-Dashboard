@@ -4,13 +4,11 @@
 # The "Sync collaborators" workflow then invites them with Write access.
 # They still have to click "accept" on the invite GitHub emails them.
 #
-# NOTE: the API needs USERNAMES, not emails. Map the people you have:
-#   marc@q-branch.dev     -> <marc's github username>
-#   brandon@q-branch.dev  -> <brandon's github username>
-#   denys@q-branch.dev    -> DenysUkr  (repo owner — already has access, do NOT list)
+# DenysUkr is the repo OWNER — already has full access, do NOT list here.
 
 permission: push   # push = read + write
 
-collaborators: []
-  # - marc-github-username
-  # - brandon-github-username
+collaborators:
+  - Q-Branch-007   # Marc
+  - QBrandon       # Brandon
+  - denys-QB       # Denys (second account)

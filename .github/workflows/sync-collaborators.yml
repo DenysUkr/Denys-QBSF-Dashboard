@@ -31,8 +31,8 @@ jobs:
             exit 0
           fi
           if [ -z "$GH_TOKEN" ]; then
-            echo "::error::Set the COLLAB_PAT secret (a PAT with repo admin) to enable auto-invites."
-            exit 1
+            echo "::warning::COLLAB_PAT secret not set — skipping auto-invite. The owner can still add people by hand, or set the secret to turn this on."
+            exit 0
           fi
           fail=0
           for u in "${users[@]}"; do
